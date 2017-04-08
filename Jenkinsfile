@@ -16,7 +16,7 @@ node {
     }
   }
 
-  stage('build') {
+  stage('run') {
     parallel compilation: {
       docker.image(toolImage).inside {
         sh 'npm run build'
