@@ -52,12 +52,16 @@ node {
   }
 
   stage('publish') {
-    docker.withRegistry(dockerRegistry, dockerCredentialsId) {
-      dockerImage.push()
+    parallel "docker image": {
+      docker.withRegistry(dockerRegistry, dockerCredentialsId) {
+        dockerImage.push()
 
-      if("${env.BRANCH_NAME}" == 'master') {
-        dockerImage.push 'latest'
+        if ("${env.BRANCH_NAME}" == 'master') {
+          dockerImage.push 'latest'
+        }
       }
+    }, 'documentation': {
+      publishHTML([allowMissing: false, alwaysLinkToLastBuild: true, keepAll: true, reportDir: 'output', reportFiles: 'index.html', reportName: 'Documentation'])
     }
   }
 }
