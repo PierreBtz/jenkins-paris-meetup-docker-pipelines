@@ -23,7 +23,7 @@ node {
       }
     }, 'unit tests': {
       docker.image(toolImage).inside {
-        sh 'npm run test -- --single-run true'
+        sh 'npm run test -- --code-coverage --single-run true'
       }
     }, 'documentation': {
       docker.image(documentationImage).inside {
@@ -60,6 +60,8 @@ node {
           dockerImage.push 'latest'
         }
       }
+    }, 'code coverage': {
+      publishHTML([allowMissing: false, alwaysLinkToLastBuild: true, keepAll: true, reportDir: 'coverage', reportFiles: 'index.html', reportName: 'Coverage'])
     }, 'documentation': {
       publishHTML([allowMissing: false, alwaysLinkToLastBuild: true, keepAll: true, reportDir: 'output', reportFiles: 'index.html', reportName: 'Documentation'])
     }
