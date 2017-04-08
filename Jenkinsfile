@@ -1,28 +1,66 @@
-#!groovy​
+#!/usr/bin/env groovy
 
 node {
-    stage('Tools check') {
-        git 'https://github.com/PierreBtz/jenkins-meetup-demo.git'
-        try {
-            sh returnStatus: true, script: 'java -version'
-        } catch (ignored) {
-            echo 'No java executable found'
-        }
-        try {
-            sh returnStatus: true, script: 'mvn'
-        } catch (ignored) {
-            echo 'No mvn executable found'
-        }
+  def toolImage = 'node:6.10.0'
+  def dockerRegistry = 'https://index.docker.io/v1/'
+  def dockerCredentialsId = 'docker-hub'
+  def commitId
+
+  stage('prepare') {
+    git 'https://github.com/PierreBtz/jenkins-paris-meetup-docker-pipelines.git'
+    commitId = getCommitId()
+
+    docker.image(toolImage).inside {
+      sh 'npm install'
     }
-    stage('Build') {
-        docker.image('maven:3.3.9-jdk-8').inside {
-            sh '''java -version \
-                && mvn -version \
-                && mvn install'''
-        }
+  }
+
+  stage('build') {
+    parallel compilation: {
+      docker.image(toolImage).inside {
+        sh 'npm run build'
+      }
+    }, 'unit tests': {
+      docker.image(toolImage).inside {
+        sh 'npm run test -- --single-run true'
+      }
+    },
+      failFast: false
+  }
+
+  def dockerImage
+
+  stage('build image') {
+    dockerImage = docker.build "pierrebtz/paris-meetup-pipeline-docker-app:${commitId}"
+  }
+
+  stage('e2e') {
+    /* in our real case, we use protractor with a selenium grid,
+    with parallel branches for the different browsers.
+    To keep the demo autocontained, the protactor test is replaced by a
+    simple curl call checking whether the container correctly serves a page or not.
+    */
+    dockerImage.withRun('-P') { c ->
+      def containerUrl = c.port(80).replaceAll('0.0.0.0', getHostIp())
+      sh "./run-e2e.sh ${containerUrl}"
     }
-    stage('Results') {
-        junit '**/target/surefire-reports/TEST-*.xml'
-        archive 'target/*.jar'
+  }
+
+  stage('publish') {
+    docker.withRegistry(dockerRegistry, dockerCredentialsId) {
+      dockerImage.push()
+
+      if("${env.BRANCH_NAME}" == 'master') {
+        dockerImage.push 'latest'
+      }
     }
+  }
+}
+
+def getCommitId() {
+  sh returnStdout: true, script: 'echo -n $(git rev-parse --short HEAD)'
+}
+
+def getHostIp() {
+  sh returnStdout: true, script: 'echo -n $(/sbin/ip route|awk \'/default/ { print $3 }\')'
 }
