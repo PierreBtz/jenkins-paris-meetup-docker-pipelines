@@ -2,6 +2,7 @@
 
 node {
   def toolImage = 'node:6.10.0'
+  def documentationImage = 'asciidoctor/docker-asciidoctor'
   def dockerRegistry = 'https://index.docker.io/v1/'
   def dockerCredentialsId = 'docker-hub'
   def commitId
@@ -24,8 +25,12 @@ node {
       docker.image(toolImage).inside {
         sh 'npm run test -- --single-run true'
       }
-    },
-      failFast: false
+    }, 'documentation': {
+      docker.image(documentationImage).inside {
+        sh 'asciidoctor -o output/index.html doc/application.adoc'
+      }
+    }
+    failFast: false
   }
 
   def dockerImage

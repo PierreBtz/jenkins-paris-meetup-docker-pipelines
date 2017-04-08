@@ -1,0 +1,7 @@
+= Jenkins Paris Meetup Jenkins Pipeline and Docker Demonstration
+Pierre Beitz <pibeitz@gmail.com>
+v1.0
+
+== Running this demonstration
+
+TODO
