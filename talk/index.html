@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Quand Docker Rencontre les Pipelines</title>
+  <meta charset="utf-8">
+  <style>
+      @import url(https://fonts.googleapis.com/css?family=Yanone+Kaffeesatz);
+      @import url(https://fonts.googleapis.com/css?family=Droid+Serif:400,700,400italic);
+      @import url(https://fonts.googleapis.com/css?family=Ubuntu+Mono:400,700,400italic);
+
+      body { font-family: 'Droid Serif'; }
+      h1, h2, h3 {
+        font-family: 'Yanone Kaffeesatz';
+        font-weight: normal;
+      }
+      .remark-code, .remark-inline-code { font-family: 'Ubuntu Mono'; }
+      .remark-slide-content   { font-size: 160%; }
+
+      .li { line-height: 200%; }
+
+      code { background: #e7e8e2; border-radius: 1px;}
+
+      .left-column {
+        width: 50%;
+        float: left;
+      }
+
+      .right-column {
+        width: 50%;
+        float: right;
+      }
+
+      .sub {
+        position: absolute;
+        color: rgb(75, 75, 75);
+        font-size: 0.7em;
+        left:40%;
+        right:20%;
+        margin-left:-150px;
+        bottom: 10%;
+      }
+
+      .caption {
+        color: rgb(100, 100, 100);
+        font-size: 0.3em;
+        bottom: 0;
+      }
+
+
+  </style>
+</head>
+<body>
+<textarea id="source">
+
+class: center, middle
+background-image: url('assets/docker-jenkins-title.png')
+
+# Quand Docker Rencontre les Pipelines
+
+.sub[ Jenkins Paris Meetup - 19 avril 2017
+
+ Pierre Beitz - @PiBtz
+]
+
+---
+
+
+# Agenda
+
+- Introduction à Docker
+
+--
+
+- Intégration avec les pipelines Jenkins
+
+--
+
+- Demo sur un cas réel
+
+---
+
+# Pourquoi des Containers ?
+
+--
+
+.center[![:scale 80%](./assets/B-4433.jpeg)]
+.center[.caption[Source: State Library of South Australia]]
+
+???
+
+C'est un peu l'état du déploiement de soft.
+
+---
+
+# Pourquoi des Containers ?
+
+.center[![:scale 80%](./assets/container-ship-596083_1920.jpg)]
+
+---
+
+# Et dans le monde logiciel...
+
+* On encapsule logiciel et dépendences
+
+--
+
+* On manipule des containers
+
+--
+
+* L'environnement d'exécution est connu et reproductible
+
+--
+
+* Le monitoring est facile
+
+---
+
+# Qu'est-ce qu'un container?
+
+--
+
+* Composition de différentes primitives du noyau linux:
+
+--
+
+ * namespaces
+
+--
+
+ * cgroups
+
+--
+
+ * et d'autres: apparmor, selinux...
+
+--
+
+* A partir de ça, pleins de projets différents: docker, rkt, LXC/LXD
+
+???
+
+Ecosystème
+
+---
+name: vms
+
+# Oui, mais moi, j'ai déjà les VMs!
+
+.left-column[![:scale 70%](https://www.docker.com/sites/default/files/Container%402x.png) ![:scale 70%](https://www.docker.com/sites/default/files/VM%402x.png)
+]
+
+---
+template: vms
+
+.right-column[
+    * Pas la même implémentation (émulation hardware, OS...)
+]
+
+--
+template: vms
+
+.right-column[
+    * Un container démarre beaucoup plus vite qu'une VM
+]
+
+--
+template: vms
+
+.right-column[
+    * L'image d'un container peut tenir dans une dizaine voire une centaine de Mo
+]
+
+---
+# Un peu de Vocabulaire Docker
+
+![:scale 80%](https://docs.docker.com/engine/userguide/storagedriver/images/sharing-layers.jpg)
+
+???
+
+
+---
+
+# Un peu de Vocabulaire
+
+### Container:
+
+* Créé à partir d'une image, démarré/redémarré/tué en quelques secondes
+
+--
+
+* Un point d'entrée
+
+--
+
+* Expose des ports
+
+--
+
+* Stocke ses données sur des volumes
+
+---
+
+# Construire une image
+
+* Dockerfile: la recette d'une image
+
+--
+
+```dockerfile
+
+FROM groovy:2.4.10-jre8
+
+MAINTAINER Pierre Beitz <pibeitz@gmail.com>
+
+RUN echo "println \"Hello world!\"" > hello.groovy
+
+CMD groovy hello.groovy
+```
+
+---
+
+# Stocker une image
+
+* Un repository central: [Docker Hub](https://hub.docker.com)
+
+--
+
+* Possibilité d'utiliser des repository privés
+
+???
+docker store
+
+---
+
+# Et Jenkins dans tout ça ?
+
+* Un build a aussi des dépendences (ex outils de build)
+
+--
+
+* Des solutions existent pour les gérer:
+
+--
+
+ * On peut préconfigurer tous les agents de build avec les outils
+
+--
+
+ * On peut se reposer sur l'installeur d'outils de Jenkins
+
+--
+
+* Ces solutions ne 'scalent' pas forcément
+
+---
+
+# Le CloudBees Docker Pipeline Plugin
+
+* Pour vos agents linux...
+
+--
+
+* Donne accès aux principales commandes nécessaires pour utiliser Docker avec Jenkins
+
+--
+
+* Intégré à Jenkins (Docker fingerprints)
+
+--
+
+* Montage du workspace, passage des variables d'environnement...
+
+???
+docker natif sur windows bientôt ?
+
+---
+
+# Un build simple
+
+```groovy
+    node {
+        git 'https://github.com/jglick/simple-maven-project-with-tests.git'
+        def mvnHome = tool 'M3'
+        sh "'${mvnHome}/bin/mvn' clean install"
+    }
+```
+--
+```groovy
+    node {
+        git 'https://github.com/jglick/simple-maven-project-with-tests.git'
+        docker.image('maven:3.3.9-jdk-8').inside {
+            sh 'mvn clean install'
+        }
+    }
+```
+---
+
+# Un changement de paradygme
+
+* La charge du déploiement d'une nouvelle version / configuration dépend du dev
+
+--
+
+* L'ops livre une infrastructure totalement agnostique
+
+--
+
+* Cahier des charges de l'agent de build: docker... et c'est tout!
+
+???
+
+Agents fongibles
+
+---
+
+# Quelques features
+
+* Isolation
+
+```groovy
+    node {
+        sh 'set MY_VARIABLE= toto'
+        docker.inside('maven:3.3.9-jdk-8) {
+            sh 'set MY_VARIABLE= tata'
+        }
+        sh 'echo MY_VARIABLE'
+        // will return toto
+    }
+```
+
+---
+
+# Quelques features
+
+* Build, test et deployment d'une image:
+
+```groovy
+   node {
+        def myImage = docker.build 'my-image'
+    }
+```
+
+--
+
+```groovy
+   node {
+        myImage.withRun { c ->
+          // Run a test against the container c started from myImage
+        }
+    }
+```
+
+--
+
+```groovy
+   node {
+        docker.withRegistry('my-registry', 'my-credentials') {
+            dockerImage.push()
+        }
+    }
+```
+
+---
+
+# Au delà des pipelines, Jenkins dans Docker
+
+* Il y a des images officielles!
+
+--
+
+* Test de master avec les données de prod
+
+--
+
+* Migration de machine très rapide
+
+???
+Quelques Masters en production avec Jenkins dans un master
+Penser à monter un volume sur le $JENKINS_HOME
+
+---
+
+# Remarques
+
+* Attention à la mémoire
+
+--
+
+* Faire des scripts pour nettoyer les images/ containers
+
+--
+
+* Utiliser une version récente de docker et de linux!
+
+--
+
+* Connaissance minimale de docker pour tous les dev qui utilisent un docker pipeline
+
+???
+Corruption du file system!!
+
+---
+
+class: center, middle
+
+# Demo!
+
+---
+
+class: center, middle
+
+# Questions?
+
+
+</textarea>
+<script src="https://gnab.github.io/remark/downloads/remark-latest.min.js">
+</script>
+<script>
+    remark.macros.scale = function (percentage) {
+        var url = this;
+        return '<img src="' + url + '" style="width: ' + percentage + '" />';
+    };
+    var slideshow = remark.create({
+        highlightLanguage: "Groovy"
+    });
+
+</script>
+</body>
+</html>
