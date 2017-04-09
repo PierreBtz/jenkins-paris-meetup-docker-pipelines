@@ -30,7 +30,6 @@ node {
         sh 'asciidoctor -o output/index.html doc/application.adoc'
       }
     }
-    failFast: false
   }
 
   def dockerImage
