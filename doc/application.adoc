@@ -1,7 +1,43 @@
 = Jenkins Paris Meetup Jenkins Pipeline and Docker Demonstration
 Pierre Beitz <pibeitz@gmail.com>
-v1.0
+v1.0.0
 
-== Running this demonstration
+== What is it?
+This repository contains the demo done at the Jenkins Paris Meetup about the usage of docker in the Jenkins pipelines.
+Presentation is available in `/talk` (in french, but please contact me if you'd like an english translation).
 
-TODO
+The workflow presented is one we use daily at work.
+Of course, the application is just a sample simply generated using angular-cli.
+
+== How to run it?
+Demo is self contained in a docker image.
+Here is how to replay it:
+
+* Build the jenkins docker image:
+
+[source,bash]
+----
+cd jenkins
+./build
+----
+
+
+* Run the docker image (the container will bind on port 80, so if you already have some service running on it, edit the
+script to change the port.
+
+[source,bash]
+----
+./run
+----
+
+* Go to `http://localhost/credentials/store/system/domain/_/` (change the port, depending on the previous step).
+
+* Add credentials with your docker hub account. Credentials id should be named `docker-hub`
+
+* Go to `http://localhost/job/jenkins-meetup-demo/`
+
+* Click on `Scan Repository Now`
+
+NOTE: Job is set to poll the github api anonymously, so you might have to wait for the scan to complete.
+You can also add credentials to the job so that the polling is done with your github account.
+https://developer.github.com/v3/#rate-limiting[More information on the why]
