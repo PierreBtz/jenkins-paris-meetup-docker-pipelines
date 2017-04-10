@@ -75,6 +75,10 @@ background-image: url('assets/docker-jenkins-title.png')
 
 --
 
+- Et l'infra?
+
+--
+
 - Demo sur un cas réel
 
 ---
@@ -255,7 +259,7 @@ docker store
 
 ---
 
-# Le CloudBees Docker Pipeline Plugin
+# Le Docker Pipeline Plugin
 
 * Pour vos agents linux...
 
@@ -273,7 +277,7 @@ docker store
 
 ???
 docker natif sur windows bientôt ?
-
+anciennement Cloudbees plugin
 ---
 
 # Un build simple
@@ -363,21 +367,17 @@ Agents fongibles
 
 ---
 
-# Au delà des pipelines, Jenkins dans Docker
+# Au delà des pipelines, docker pour l'infra Jenkins
 
-* Il y a des images officielles!
-
---
-
-* Test de master avec les données de prod
+* Des images officielles: jenkinsci/jenkins (pour le master)
 
 --
 
-* Migration de machine très rapide
+* Docker Plugin pour provisionner dynamiquement des agents avec un docker host
 
-???
-Quelques Masters en production avec Jenkins dans un master
-Penser à monter un volume sur le $JENKINS_HOME
+--
+
+* Remarque: ne pas faire du Docker in Docker!
 
 ---
 
