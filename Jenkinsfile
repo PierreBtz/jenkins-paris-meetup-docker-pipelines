@@ -1,36 +1,57 @@
 #!/usr/bin/env groovy
 
-node {
-  def toolImage = 'node:6.10.0'
-  def documentationImage = 'asciidoctor/docker-asciidoctor'
-  def dockerRegistry = 'https://index.docker.io/v1/'
-  def dockerCredentialsId = 'docker-hub'
-  def commitId
+def toolImage = 'node:6.10.0'
+def documentationImage = 'asciidoctor/docker-asciidoctor'
+def dockerRegistry = 'https://index.docker.io/v1/'
+def dockerCredentialsId = 'docker-hub'
+def commitId
 
+node {
   stage('prepare') {
-    git 'https://github.com/PierreBtz/jenkins-paris-meetup-docker-pipelines.git'
+    checkout scm
     commitId = getCommitId()
 
     docker.image(toolImage).inside {
       sh 'npm install'
     }
+    stash 'workspace'
   }
+}
 
-  stage('run') {
-    parallel compilation: {
+stage('run') {
+  parallel compilation: {
+    node {
+      unstash 'workspace'
       docker.image(toolImage).inside {
         sh 'npm run build'
       }
-    }, 'unit tests': {
+      stash includes: 'dist/**.*', name: 'dist'
+      stash includes: 'run-e2e.sh, Dockerfile', name: 'scripts'
+    }
+  }, 'unit tests': {
+    node {
+      unstash 'workspace'
       docker.image(toolImage).inside {
         sh 'npm run test -- --code-coverage --single-run true'
       }
-    }, 'documentation': {
+      stash includes: 'coverage/**.*', name: 'coverage'
+    }
+  }, 'documentation': {
+    node {
+      unstash 'workspace'
       docker.image(documentationImage).inside {
         sh 'asciidoctor -o output/index.html doc/application.adoc'
       }
+      stash includes: 'output/**.*', name: 'documentation'
     }
   }
+}
+
+node {
+  unstash 'dist'
+  unstash 'coverage'
+  unstash 'documentation'
+  unstash 'scripts'
 
   def dockerImage
 
