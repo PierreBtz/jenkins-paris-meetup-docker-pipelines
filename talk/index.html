@@ -185,7 +185,7 @@ template: vms
 
 ---
 
-# Un peu de Vocabulaire
+# Un peu de Vocabulaire Docker
 
 ### Container:
 
@@ -300,6 +300,35 @@ anciennement Cloudbees plugin
         }
     }
 ```
+---
+
+# Autre stratégie de build
+
+```dockerfile
+
+FROM node:6.10.0
+
+MAINTAINER Pierre Beitz <pibeitz@gmail.com>
+
+COPY package.json
+
+RUN npm install
+
+COPY . .
+
+RUN npm run build
+```
+
+--
+
+```groovy
+
+node {
+  sh 'docker build .'
+}
+
+```
+
 ---
 
 # Un changement de paradygme
