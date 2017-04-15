@@ -172,7 +172,7 @@ template: vms
 template: vms
 
 .right-column[
-    * L'image d'un container peut tenir dans une dizaine voire une centaine de Mo
+    * L'image d'un container peut tenir dans une centaine voire une dizaine de Mo
 ]
 
 ---
@@ -355,9 +355,9 @@ Agents fongibles
 
 ```groovy
     node {
-        sh 'set MY_VARIABLE= toto'
-        docker.inside('maven:3.3.9-jdk-8) {
-            sh 'set MY_VARIABLE= tata'
+        sh 'set MY_VARIABLE=toto'
+        docker.inside('maven:3.3.9-jdk-8') {
+            sh 'set MY_VARIABLE=tata'
         }
         sh 'echo MY_VARIABLE'
         // will return toto
