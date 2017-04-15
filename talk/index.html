@@ -368,10 +368,10 @@ Agents fongibles
 
 # Quelques features
 
-* Build, test et deployment d'une image:
+* Build, test et déploiement d'une image:
 
 ```groovy
-   node {
+   stage('build') {
         def myImage = docker.build 'my-image'
     }
 ```
@@ -379,7 +379,7 @@ Agents fongibles
 --
 
 ```groovy
-   node {
+   stage('test') {
         myImage.withRun { c ->
           // Run a test against the container c started from myImage
         }
@@ -389,9 +389,9 @@ Agents fongibles
 --
 
 ```groovy
-   node {
+   stage('publish') {
         docker.withRegistry('my-registry', 'my-credentials') {
-            dockerImage.push()
+            myImage.push()
         }
     }
 ```
