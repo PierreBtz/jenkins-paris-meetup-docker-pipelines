@@ -358,12 +358,14 @@ Agents fongibles
 
 ```groovy
     node {
-        sh 'set MY_VARIABLE=toto'
+        sh 'curl --version'
+        // curl 7.47.0 (x86_64-pc-linux-gnu) libcurl/7.47.0
+        // GnuTLS/3.4.10 zlib/1.2.8 libidn/1.32 librtmp/2.3
         docker.inside('maven:3.3.9-jdk-8') {
-            sh 'set MY_VARIABLE=tata'
+            sh 'curl --version'
+            // curl 7.38.0 (x86_64-pc-linux-gnu) libcurl/7.38.0 OpenSSL/1.0.1t
+            // zlib/1.2.8 libidn/1.29 libssh2/1.4.3 librtmp/2.3
         }
-        sh 'echo MY_VARIABLE'
-        // will return toto
     }
 ```
 
